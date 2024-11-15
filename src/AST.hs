@@ -8,6 +8,23 @@ data Stmt i = Def String i           --  Declarar un nuevo identificador x, def 
               | Eval i                 --  Evaluar el término
     deriving (Show)
 
+data AbsType = AVar | APair | ANull
+data LetType = LVar | LPair | LNull | LFun
+
+data STerm = 
+    SC Const
+  | SZero
+  | SOne
+  | SOple
+  | STuple [STerm]
+  | SAbs AbsType [Name] STerm
+  | SLet LetType [Name] STerm STerm
+  | SApp STerm STerm
+  | SInjL STerm
+  | SInjR STerm
+  | SIf STerm STerm STerm
+  | SMatch STerm Name STerm Name STerm
+
 data Term =
     C Const
   | Ople 
