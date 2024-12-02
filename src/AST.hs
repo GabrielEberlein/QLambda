@@ -4,18 +4,19 @@ module AST where
 -- Identificadores de Variable
 type Name = String
 
+type Program = [Stmt STerm]
+
 data Stmt i = Def String i           --  Declarar un nuevo identificador x, def x = t
-              | Eval i                 --  Evaluar el término
     deriving (Show)
 
-data AbsType = AVar | APair | ANull
-data LetType = LVar | LPair | LNull | LFun
+data AbsType = AVar | APair | ANull deriving (Show, Eq)
+data LetType = LVar | LPair | LNull | LFun deriving (Show, Eq)
 
 data STerm = 
     SC Const
+  | SV Name
   | SZero
   | SOne
-  | SOple
   | STuple [STerm]
   | SAbs AbsType [Name] STerm
   | SLet LetType [Name] STerm STerm
@@ -24,18 +25,20 @@ data STerm =
   | SInjR STerm
   | SIf STerm STerm STerm
   | SMatch STerm Name STerm Name STerm
+  deriving (Show, Eq)
 
 data Term =
     C Const
   | Ople 
-  | Var Name
-  | Abs Name Term
+  | Bound Int
+  | Free Name
+  | Abs Term
   | App Term Term
   | Pair Term Term
-  | Let Name Name Term Term
+  | Let Term Term
   | InjL Term
   | InjR Term
-  | Match Term Name Term Name Term
+  | Match Term Term Term
   deriving (Show, Eq)
 
 data Const =
@@ -74,7 +77,7 @@ pattern Bit = Sum T T
 data Value =
     VC Const
   | VQbit Int
-  | VAbs Name Term
+  | VAbs Term
   | VInjL Value
   | VInjR Value
   | VOple
