@@ -28,6 +28,7 @@ dependencies:
 - bits
 - random
 - mtl
+- parsec >= 3.1.9
 
 ghc-options:
 - -Wall
