@@ -6,6 +6,7 @@ import           Prelude hiding (const, abs)
 import           Text.Parsec hiding (runP)
 import           Text.ParserCombinators.Parsec.Language
 import qualified Text.Parsec.Token as Tok
+import          Debug.Trace
 import qualified Text.Parsec.Expr as Ex
 import           Text.Parsec.Language
 import Control.Monad.Identity (Identity)
@@ -23,13 +24,16 @@ lexer = Tok.makeTokenParser langDef
 
 langDef :: LanguageDef u
 langDef = emptyDef {
-         Tok.commentLine    = "#",
+         Tok.identStart    = letter <|> char '_',
+         Tok.opStart       = oneOf "=.\\",
+         Tok.opLetter      = parserZero,
+         Tok.commentLine   = "#",
          Tok.reservedNames = ["def","if", "then", "else", "match", "with",
                               "let", "rec", "in",
                               "injl", "injr", 
                               "new", "meas",
                               "X", "Y", "Z", "H", "CNOT", "0", "1","*"],
-         Tok.reservedOpNames = ["->","\\",".","=","|"]
+         Tok.reservedOpNames = ["->","\\",".","=","|",","]
         }
 
 whiteSpace :: P ()
@@ -72,11 +76,6 @@ num = fromInteger <$> natural
 var :: P Name
 var = identifier
 
-pair :: P [Name]
-pair = angles $ do l <- var
-                   reservedOp ","
-                   r <- var
-                   return [l,r]
 
 gate :: P Gate
 gate =     (reserved "X" >> return X)
@@ -114,16 +113,24 @@ atom =      SC <$> const
 
 absVars :: P ([Name], AbsType)
 absVars = do vars <- many var
+             reservedOp "."
              return (vars, AVar)
+
+pair :: P [Name]
+pair = angles $ do l <- var
+                   reservedOp ","
+                   r <- var
+                   return [l,r]
 
 absPair :: P ([Name], AbsType)
 absPair = do p <- pair
+             reservedOp "."
              return (p, APair)
 
 abs :: P STerm
-abs = do reservedOp "\\"
+abs = do seekNext 1 
+         reservedOp "\\"
          (vars, absTy) <- try absPair <|> absVars
-         reservedOp "."
          t <- tm
          return (SAbs absTy vars t)
 
@@ -212,3 +219,14 @@ parse s = case runP stmt s "" of
 
 program :: P [Stmt STerm]
 program = many stmt
+
+-- Debug utilities--------------------------
+-- Prints the remaining string to be parsed
+println :: (Show a, Monad m) => a -> m ()
+println msg = trace (show msg) $ return ()
+
+seekNext :: Int -> ParsecT String u Identity ()
+seekNext n = do
+  s <- getParserState
+  let out = take n (stateInput s)
+  println out
