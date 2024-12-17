@@ -84,9 +84,10 @@ measure ket i = do let n = nrQbits ket
 
 
 -- Función que extiende una matriz a una de mayor dimensión
-extend :: Gate -> Int -> Int -> Matrix (Complex Double)
-extend u n i = let g = getGate u
-               in (M.identity 2^i) `tensor` g `tensor` (M.identity 2^(n - i - (mNrQbits g)))
+extend :: Gate -> Int -> Int -> IO (Matrix (Complex Double))
+extend u n i = do let g = getGate u
+                  let m = M.identity (2^i) `tensor` g `tensor` M.identity (2^(n - i - (mNrQbits g)))
+                  return m
 
 swapQbits :: Int -> Int -> Ket -> Ket
 swapQbits i j ket | i > j = swapQbits j i ket

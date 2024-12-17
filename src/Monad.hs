@@ -9,7 +9,8 @@ module Monad (
   MonadQuantum(..),
   Value(..),
   throwError,
-  runQState
+  runQState,
+  liftIO,
 ) where
 
 import AST
@@ -66,12 +67,13 @@ class (MonadIO m, MonadState Env m, MonadError Error m) => MonadQuantum m where
 
   apply :: Gate -> Int -> m ()
   apply u i = do q <- getQbits
-                 let q' = (extend u (nrQbits q) i) * colVector q
+                 liftIO $ print i
+                 u' <- liftIO $ extend u (nrQbits q) i 
+                 let q' = u' * colVector q
                  setQbits $ toVector q'
 
   swap :: Int -> Int -> m ()
   swap i j = do q <- getQbits
-                liftIO $ print ("swap:" ++ show (i,j))
                 setQbits (swapQbits i j q)
 
   apply2 :: Gate -> Int -> Int -> m ()
