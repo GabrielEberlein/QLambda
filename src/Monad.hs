@@ -33,6 +33,9 @@ data Env = Env {
 
 
 class (MonadIO m, MonadState Env m, MonadError Error m) => MonadQuantum m where
+  logM :: Show a => a -> m ()
+  logM a = liftIO $ print $ show a
+
   getQbits :: m Ket
   getQbits = gets qbits
 
@@ -58,6 +61,7 @@ class (MonadIO m, MonadState Env m, MonadError Error m) => MonadQuantum m where
   meas :: Int -> m Value
   meas i = do q <- getQbits
               (q', r) <- liftIO $ measure q i
+              logM q'
               setQbits q'
               case r of
                 Just 0 -> do return VZero
@@ -67,7 +71,6 @@ class (MonadIO m, MonadState Env m, MonadError Error m) => MonadQuantum m where
 
   apply :: Gate -> Int -> m ()
   apply u i = do q <- getQbits
-                 liftIO $ print i
                  u' <- liftIO $ extend u (nrQbits q) i 
                  let q' = u' * colVector q
                  setQbits $ toVector q'

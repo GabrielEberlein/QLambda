@@ -30,6 +30,7 @@ data STerm =
 data Term =
     C Const
   | Ople 
+  | QBit Int
   | Bound Int
   | Free Name
   | Abs Term
@@ -85,7 +86,7 @@ data Value =
   deriving (Show, Eq)
 
 pattern VZero :: Value
-pattern VZero = VInjL VOple
+pattern VZero = VInjR VOple
 
 pattern VOne :: Value
-pattern VOne = VInjR VOple
+pattern VOne = VInjL VOple

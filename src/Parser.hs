@@ -128,8 +128,7 @@ absPair = do p <- pair
              return (p, APair)
 
 abs :: P STerm
-abs = do seekNext 1 
-         reservedOp "\\"
+abs = do reservedOp "\\"
          (vars, absTy) <- try absPair <|> absVars
          t <- tm
          return (SAbs absTy vars t)
@@ -219,14 +218,3 @@ parse s = case runP stmt s "" of
 
 program :: P [Stmt STerm]
 program = many stmt
-
--- Debug utilities--------------------------
--- Prints the remaining string to be parsed
-println :: (Show a, Monad m) => a -> m ()
-println msg = trace (show msg) $ return ()
-
-seekNext :: Int -> ParsecT String u Identity ()
-seekNext n = do
-  s <- getParserState
-  let out = take n (stateInput s)
-  println out

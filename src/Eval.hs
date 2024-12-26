@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-# OPTIONS_GHC -Wno-missing-fields #-}
+{-# OPTIONS_GHC -Wno-unused-do-bind #-}
 module Eval(
     defEnv,
     evalGate,
@@ -22,51 +23,82 @@ defEnv = Env {
         }
 
 evalGate :: (MonadQuantum m) => Gate -> Value -> m Value
-evalGate u v@(VPair (VQbit i) (VQbit j)) = do apply2 u i j
+evalGate u v@(VPair (VQbit i) (VQbit j)) = do liftIO $ print (u, i, j)
+                                              apply2 u i j
+                                              liftIO $ print "success"
                                               return v
-evalGate u v@(VQbit i) = do apply u i
+evalGate u v@(VQbit i) = do liftIO $ print (u, i)
+                            apply u i
+                            liftIO $ print "success"
                             return v
 evalGate _ _ = throwError "Invalid type"
 
 evalConst :: (MonadQuantum m) => Const -> Value -> m Value
 evalConst New VZero = new 0
 evalConst New VOne = new 1
-evalConst Meas (VQbit i) = meas i
+evalConst Meas (VQbit i) =  do liftIO $ print ("measuring " ++ show i)
+                               r <- meas i
+                               liftIO $ print "success"
+                               return r
 evalConst (U u) v = evalGate u v
 
 
-eval :: (MonadQuantum m) => [Value] -> Term -> m Value
-eval _ (C t) = return (VC t)
-eval _  Ople = return VOple
-eval _ (Abs t) = return (VAbs t)
-eval _ (Free n) = lookupVar n
-eval e (Bound i) = return (e !! i)
-eval e (InjL t) = do v <- eval e t
-                     return (VInjL v)
-eval e (InjR t) = do v <- eval e t
-                     return (VInjR v)
-eval e (Pair t1 t2) = do v1 <- eval e t1
-                         v2 <- eval e t2
-                         return (VPair v1 v2)
-eval e (App t1 t2) = do v1 <- eval e t1
-                        v2 <- eval e t2
-                        case v1 of
-                          VAbs t -> do eval (v2:e) t
-                          VC c -> evalConst c v2
-                          _ -> throwError "Invalid application"
-eval e (Let m n) = do p <- eval e m
-                      case p of
-                        VPair v1 v2 -> do eval ([v2,v1]++e) n
-                        _ -> throwError "Invalid let"
-eval e (Match t l r) = do v <- eval e t
-                          case v of
-                            VInjL v' -> do eval (v':e) l
-                            VInjR v' -> do eval (v':e) r
-                            _ -> throwError "Invalid match"
+eval :: (MonadQuantum m) => Term -> m Value
+eval (C t) = return (VC t)
+eval Ople = return VOple
+eval (Abs t) = return (VAbs t)
+eval (Free n) = lookupVar n
+eval (Bound _) = throwError "Invalid bound variable"
+eval (QBit i) = return (VQbit i)
+eval (InjL t) = do v <- eval t
+                   return (VInjL v)
+eval (InjR t) = do v <- eval t
+                   return (VInjR v)
+eval (Pair t1 t2) = do v1 <- eval t1
+                       v2 <- eval t2
+                       return (VPair v1 v2)
+eval (App t1 t2) = do v1 <- eval t1
+                      v2 <- eval t2
+                      case v1 of
+                        VAbs t -> do eval $ subst 0 (quote v2) t
+                        VC c -> evalConst c v2
+                        _ -> throwError "Invalid application"
+eval (Let m n) = do p <- eval m
+                    case p of
+                      VPair v1 v2 -> do eval $ subst 1 (quote v1) $ subst 0 (quote v2) n
+                      _ -> throwError "Invalid let"
+eval (Match t l r) = do v <- eval t
+                        case v of
+                          VInjL v' -> do eval $ subst 0 (quote v') l
+                          VInjR v' -> do eval $ subst 0 (quote v') r
+                          _ -> throwError "Invalid match"
+
+subst :: Int -> Term -> Term -> Term
+subst i t (Bound j) | i == j = t
+                    | otherwise = Bound j
+subst i t (Abs t') = Abs (subst (i+1) t t')
+subst i t (App t1 t2) = App (subst i t t1) (subst i t t2)
+subst i t (Let m n) = Let (subst i t m) (subst (i+2) t n)
+subst i t (Match c l r) = Match (subst i t c) (subst (i+1) t l) (subst (i+1) t r)
+subst i t (Pair t1 t2) = Pair (subst i t t1) (subst i t t2)
+subst i t (InjL t') = InjL (subst i t t')
+subst i t (InjR t') = InjR (subst i t t')
+subst _ _ t = t
+
+quote :: Value -> Term
+quote (VC t) = C t
+quote VOple = Ople
+quote (VAbs t) = Abs t
+quote (VInjL v) = InjL (quote v)
+quote (VInjR v) = InjR (quote v)
+quote (VPair v1 v2) = Pair (quote v1) (quote v2)
+quote (VQbit i) = QBit i
+
+
 
 evalProgram :: (MonadQuantum m) => [Stmt Term] -> m Value
 evalProgram [] = throwError "Empty program"
-evalProgram [Def _ t] = eval [] t
-evalProgram ((Def n t):xs) = do v <- eval [] t
+evalProgram [Def _ t] = eval t
+evalProgram ((Def n t):xs) = do v <- eval t
                                 updateVar n v
                                 evalProgram xs

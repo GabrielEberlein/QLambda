@@ -97,7 +97,7 @@ swapQbits i j ket | i > j = swapQbits j i ket
 
 newIndex :: Int -> Int -> Int -> Int
 newIndex ib jb k = let r = (ib .&. k) `xor` (jb .&. k) in
-                    if r == (ib .&. k) then (k + (jb - ib)) else
-                    if r == (jb .&. k) then (k - (jb - ib)) else k
+                    if r == ib then (k - (ib - jb)) else
+                    if r == jb then (k + (ib - jb)) else k
 
 
