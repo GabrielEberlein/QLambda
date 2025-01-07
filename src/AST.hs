@@ -17,6 +17,7 @@ data STerm =
   | SV Name
   | SZero
   | SOne
+  | SPrint String STerm
   | STuple [STerm]
   | SAbs AbsType [Name] STerm
   | SLet LetType [Name] STerm STerm
@@ -30,6 +31,7 @@ data STerm =
 data Term =
     C Const
   | Ople 
+  | Print String Term
   | QBit Int
   | Bound Int
   | Free Name

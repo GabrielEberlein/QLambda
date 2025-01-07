@@ -32,6 +32,7 @@ langDef = emptyDef {
                               "let", "rec", "in",
                               "injl", "injr", 
                               "new", "meas",
+                              "printState",
                               "X", "Y", "Z", "H", "CNOT", "0", "1","*"],
          Tok.reservedOpNames = ["->","\\",".","=","|",","]
         }
@@ -101,11 +102,18 @@ inj = do reserved "injl"
          t <- parens tm
          return $ SInjR t
 
+printexp :: P STerm
+printexp = do reserved "printState"
+              s <- stringLiteral
+              t <- parens tm
+              return $ SPrint s t
+
 atom :: P STerm
 atom =      SC <$> const
        <|>  SV <$> var
        <|>  tuple
        <|>  inj
+       <|>  printexp
        <|> (reserved "0" >> return SZero)
        <|> (reserved "1" >> return SOne)
        <|> (reserved "*" >> return (STuple []))

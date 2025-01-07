@@ -23,23 +23,16 @@ defEnv = Env {
         }
 
 evalGate :: (MonadQuantum m) => Gate -> Value -> m Value
-evalGate u v@(VPair (VQbit i) (VQbit j)) = do liftIO $ print (u, i, j)
-                                              apply2 u i j
-                                              liftIO $ print "success"
+evalGate u v@(VPair (VQbit i) (VQbit j)) = do apply2 u i j
                                               return v
-evalGate u v@(VQbit i) = do liftIO $ print (u, i)
-                            apply u i
-                            liftIO $ print "success"
+evalGate u v@(VQbit i) = do apply u i
                             return v
 evalGate _ _ = throwError "Invalid type"
 
 evalConst :: (MonadQuantum m) => Const -> Value -> m Value
 evalConst New VZero = new 0
 evalConst New VOne = new 1
-evalConst Meas (VQbit i) =  do liftIO $ print ("measuring " ++ show i)
-                               r <- meas i
-                               liftIO $ print "success"
-                               return r
+evalConst Meas (VQbit i) = meas i
 evalConst (U u) v = evalGate u v
 
 
@@ -54,6 +47,10 @@ eval (InjL t) = do v <- eval t
                    return (VInjL v)
 eval (InjR t) = do v <- eval t
                    return (VInjR v)
+eval (Print s t) = do v <- eval t
+                      logM s
+                      ppState
+                      return v
 eval (Pair t1 t2) = do v1 <- eval t1
                        v2 <- eval t2
                        return (VPair v1 v2)
@@ -83,6 +80,7 @@ subst i t (Match c l r) = Match (subst i t c) (subst (i+1) t l) (subst (i+1) t r
 subst i t (Pair t1 t2) = Pair (subst i t t1) (subst i t t2)
 subst i t (InjL t') = InjL (subst i t t')
 subst i t (InjR t') = InjR (subst i t t')
+subst i t (Print s t') = Print s (subst i t t')
 subst _ _ t = t
 
 quote :: Value -> Term

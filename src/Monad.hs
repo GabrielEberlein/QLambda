@@ -23,6 +23,7 @@ import System.Random
 import System.IO
 import Qbit
 import Data.Matrix (colVector)
+import PrettyPrinter (prettyQbits)
 
 type Error = String
 
@@ -33,8 +34,8 @@ data Env = Env {
 
 
 class (MonadIO m, MonadState Env m, MonadError Error m) => MonadQuantum m where
-  logM :: Show a => a -> m ()
-  logM a = liftIO $ print $ show a
+  logM :: String -> m ()
+  logM s = liftIO $ putStrLn s
 
   getQbits :: m Ket
   getQbits = gets qbits
@@ -52,6 +53,11 @@ class (MonadIO m, MonadState Env m, MonadError Error m) => MonadQuantum m where
   updateVar :: Name -> Value -> m ()
   updateVar n v = modify (\e -> e {vars = M.insert n v (vars e)})
 
+  ppState :: m ()
+  ppState = do
+      q <- getQbits
+      logM $ prettyQbits 0 (nrQbits q) (toList q)
+
   new :: Int -> m Value
   new b = do q <- getQbits
              let q' = tensor q (fromBit b)
@@ -61,7 +67,6 @@ class (MonadIO m, MonadState Env m, MonadError Error m) => MonadQuantum m where
   meas :: Int -> m Value
   meas i = do q <- getQbits
               (q', r) <- liftIO $ measure q i
-              logM q'
               setQbits q'
               case r of
                 Just 0 -> do return VZero

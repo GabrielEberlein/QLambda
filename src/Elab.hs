@@ -34,6 +34,7 @@ elab e (SApp m n) = do m' <- elab e m
                        return $ App m' n'
 elab e (SInjL t) = InjL <$> elab e t
 elab e (SInjR t) = InjR <$> elab e t
+elab e (SPrint s t) = Print s <$> elab e t
 elab e (SIf c m n) = do c' <- elab e c
                         m' <- elab ("*":e) m
                         n' <- elab ("*":e) n

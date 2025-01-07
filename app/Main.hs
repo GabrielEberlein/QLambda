@@ -4,8 +4,6 @@ import AST
 import Eval
 
 import System.IO (hFlush, stdout, readFile)
-import Control.Monad (when)
-import System.Random (newStdGen)
 import Monad
 import Parser
 import Elab (elabProgram)
@@ -47,8 +45,7 @@ fileInput = do
         loop = do
             hFlush stdout
             filePath <- getLine
-            v<-runQState (loadFile $ "ejemplos/" ++ filePath) defEnv
-            print v
+            _<-runQState (loadFile $ "ejemplos/" ++ filePath) defEnv
             loop
 
 loadFile :: MonadQuantum m => String -> m Value
