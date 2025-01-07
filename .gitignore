@@ -1,0 +1,6 @@
+.stack-work/
+stack.*
+dist-newstyle/
+Setup.hs
+Qlambda.cabal
+*~
