@@ -156,12 +156,12 @@ ifexp = do reserved "if"
            e <- tm
            return (SIf c t e)
 
--- letRec :: P ([Name], LetType)
--- letRec = do reserved "rec"
---             f <- var
---             vars <- many var
---             reservedOp "="
---             return (f:vars, LRec)
+letRec :: P ([Name], LetType)
+letRec = do reserved "rec"
+            f <- var
+            vars <- many var
+            reservedOp "="
+            return (f:vars, LRec)
 
 letFun :: P ([Name], LetType)
 letFun = do f <- var
@@ -181,7 +181,7 @@ letVar = do v <- var
 
 letexp :: P STerm
 letexp = do reserved "let" 
-            (vars, letTy) <- try letVar <|> try letPair <|> letFun
+            (vars, letTy) <- try letVar <|> try letPair <|> try letFun <|> letRec
             t <- tm
             reserved "in"
             t' <- tm

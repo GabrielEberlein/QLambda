@@ -29,6 +29,15 @@ elab e (SLet LPair [v1,v2] m n) = do m' <- elab e m
                                      n' <- elab ([v2,v1] ++ e) n
                                      return $ Let m' n'
 elab e (SLet LFun (f:ys) m n) = elab e $ SLet LVar [f] (SAbs AVar ys m) n
+
+elab e (SLet LRec [f,x] m n) = do m' <- elab ([f,x] ++ e) m
+                                  n' <- elab (f:e) n
+                                  return $ Rec m' n'
+                                  
+elab e (SLet LRec (f:(x:ys)) m n) = do m' <- elab (x:f:e) $ SAbs AVar ys m
+                                       n' <- elab (f:e) n
+                                       return $ Rec m' n'
+
 elab e (SApp m n) = do m' <- elab e m
                        n' <- elab e n
                        return $ App m' n'

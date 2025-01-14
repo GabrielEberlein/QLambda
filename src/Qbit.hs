@@ -45,9 +45,6 @@ fromBit 0 = V.fromList [(1 :+ 0), (0 :+ 0)]
 fromBit 1 = V.fromList [(0 :+ 0), (1 :+ 0)]
 fromBit _ = error "Invalid bit"
 
-fromProb :: Double -> Ket
-fromProb p = V.fromList [(p :+ 0), ((1-p) :+ 0)]
-
 toVector :: Matrix (Complex Double) -> Ket
 toVector m = V.fromList $ M.toList m
 

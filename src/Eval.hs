@@ -57,13 +57,15 @@ eval (Pair t1 t2) = do v1 <- eval t1
 eval (App t1 t2) = do v1 <- eval t1
                       v2 <- eval t2
                       case v1 of
-                        VAbs t -> do eval $ subst 0 (quote v2) t
+                        VAbs t -> eval $ subst 0 (quote v2) t
                         VC c -> evalConst c v2
                         _ -> throwError "Invalid application"
 eval (Let m n) = do p <- eval m
                     case p of
                       VPair v1 v2 -> do eval $ subst 1 (quote v1) $ subst 0 (quote v2) n
                       _ -> throwError "Invalid let"
+eval (Rec m n) = eval $ subst 0 (Abs (Rec m m)) n
+
 eval (Match t l r) = do v <- eval t
                         case v of
                           VInjL v' -> do eval $ subst 0 (quote v') l
@@ -81,10 +83,11 @@ subst i t (Pair t1 t2) = Pair (subst i t t1) (subst i t t2)
 subst i t (InjL t') = InjL (subst i t t')
 subst i t (InjR t') = InjR (subst i t t')
 subst i t (Print s t') = Print s (subst i t t')
+subst i t (Rec m n) = Rec (subst (i+2) t m) (subst (i+1) t n)
 subst _ _ t = t
 
 quote :: Value -> Term
-quote (VC t) = C t
+quote (VC c) = C c
 quote VOple = Ople
 quote (VAbs t) = Abs t
 quote (VInjL v) = InjL (quote v)

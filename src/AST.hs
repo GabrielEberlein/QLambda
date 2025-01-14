@@ -10,7 +10,7 @@ data Stmt i = Def String i           --  Declarar un nuevo identificador x, def 
     deriving (Show)
 
 data AbsType = AVar | APair | ANull deriving (Show, Eq)
-data LetType = LVar | LPair | LNull | LFun deriving (Show, Eq)
+data LetType = LVar | LPair | LNull | LFun | LRec deriving (Show, Eq)
 
 data STerm = 
     SC Const
@@ -39,6 +39,7 @@ data Term =
   | App Term Term
   | Pair Term Term
   | Let Term Term
+  | Rec Term Term
   | InjL Term
   | InjR Term
   | Match Term Term Term
