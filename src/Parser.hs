@@ -1,15 +1,12 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use <$>" #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Parser where
 
 import           Prelude hiding (const, abs)
 import           Text.Parsec hiding (runP)
 import           Text.ParserCombinators.Parsec.Language
 import qualified Text.Parsec.Token as Tok
-import          Debug.Trace
-import qualified Text.Parsec.Expr as Ex
-import           Text.Parsec.Language
-import Control.Monad.Identity (Identity)
 
 import           AST
 
@@ -105,7 +102,7 @@ inj = do reserved "injl"
 printexp :: P STerm
 printexp = do reserved "printState"
               s <- stringLiteral
-              t <- parens tm
+              t <- tm
               return $ SPrint s t
 
 atom :: P STerm
@@ -207,22 +204,25 @@ tm = abs <|> letexp <|> app <|> atom <|> match <|> ifexp
 
 -- | Parsea una declaración a un término
 -- Útil para las sesiones interactivas
-stmt :: P (Stmt STerm)
-stmt =  do reserved "def"
+decl :: P (Decl STerm)
+decl =  do reserved "def"
            n <- var
            reservedOp "="
            t <- tm
            return $ Def n t
+
+declOrTm :: P (Either (Decl STerm) STerm)
+declOrTm =  (Left <$> decl) <|> (Right <$> tm)
 
 -- Corre un parser, chequeando que se pueda consumir toda la entrada
 runP :: P a -> String -> String -> Either ParseError a
 runP p s filename = runParser (whiteSpace *> p <* eof) () filename s
 
 --para debugging en uso interactivo (ghci)
-parse :: String -> Stmt STerm
-parse s = case runP stmt s "" of
+parse :: String -> Decl STerm
+parse s = case runP decl s "" of
             Right t -> t
-            Left e -> error ("no parse: " ++ show s)
+            Left e -> error ("no parse: " ++ show s ++ "\n error: " ++ show e)
 
-program :: P [Stmt STerm]
-program = many stmt
+program :: P [Decl STerm]
+program = many decl

@@ -6,4 +6,4 @@
 def c = \x.meas (H (new 0))
 
 def M = let rec f x = if c * then H (f x) else x 
-            in printState "result: " (f (new 0))
+            in printState "result: " f (new 0)
