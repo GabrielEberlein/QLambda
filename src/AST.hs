@@ -1,12 +1,13 @@
 {-# LANGUAGE PatternSynonyms #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module AST where
 
 -- Identificadores de Variable
 type Name = String
 
-type Program = [Stmt STerm]
+type Program = [Decl STerm]
 
-data Stmt i = Def String i           --  Declarar un nuevo identificador x, def x = t
+data Decl i = Def String i           --  Declarar un nuevo identificador x, def x = t
     deriving (Show)
 
 data AbsType = AVar | APair | ANull deriving (Show, Eq)
