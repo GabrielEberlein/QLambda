@@ -1,8 +1,9 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module Elab where
 import AST
 import Data.List (elemIndex)
-import Monad (MonadQuantum, liftIO)
+import Monad (MonadQuantum)
 
 type Env = [String]
 
@@ -53,7 +54,7 @@ elab e (SMatch c x m y n) = do c' <- elab e c
                                n' <- elab (y:e) n
                                return $ Match c' m' n'
 
-elabProgram :: MonadQuantum m => [Stmt STerm] -> m [Stmt Term]
+elabProgram :: MonadQuantum m => [Decl STerm] -> m [Decl Term]
 elabProgram [] = return []
 elabProgram (Def x t:xs) = do t' <- elab [] t
                               xs' <- elabProgram xs

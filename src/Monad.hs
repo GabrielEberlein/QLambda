@@ -3,8 +3,7 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Redundant bracket" #-}
 module Monad (
-  QState(..),
-  Env(..),
+  PState(..),
   Error,
   MonadQuantum(..),
   Value(..),
@@ -14,26 +13,22 @@ module Monad (
 ) where
 
 import AST
-import Control.Monad  ( liftM, ap)
 import qualified Data.Map               as M
 import Control.Monad.State
 import Control.Monad.Except
-import Control.Monad.Reader
-import System.Random
-import System.IO
 import Qbit
 import Data.Matrix (colVector)
 import PrettyPrinter (prettyQbits)
 
 type Error = String
 
-data Env = Env {
+data PState = State {
   qbits :: Ket,
   vars :: M.Map Name Value
 } deriving (Show)
 
 
-class (MonadIO m, MonadState Env m, MonadError Error m) => MonadQuantum m where
+class (MonadIO m, MonadState PState m, MonadError Error m) => MonadQuantum m where
   logM :: String -> m ()
   logM s = liftIO $ putStrLn s
 
@@ -76,7 +71,7 @@ class (MonadIO m, MonadState Env m, MonadError Error m) => MonadQuantum m where
 
   apply :: Gate -> Int -> m ()
   apply u i = do q <- getQbits
-                 u' <- liftIO $ extend u (nrQbits q) i 
+                 u' <- liftIO $ extend u (nrQbits q) i
                  let q' = u' * colVector q
                  setQbits $ toVector q'
 
@@ -90,9 +85,9 @@ class (MonadIO m, MonadState Env m, MonadError Error m) => MonadQuantum m where
                | i > j     = do  swap i j >> apply2 u j i >> swap i j
                | otherwise = throwError "Cant apply binary gate to the same qubit"
 
-type QState = StateT Env (ExceptT Error IO)
+type QState = StateT PState (ExceptT Error IO)
 
 instance MonadQuantum QState
 
-runQState :: QState a -> Env -> IO (Either Error (a, Env))
+runQState :: QState a -> PState -> IO (Either Error (a, PState))
 runQState m s = runExceptT $ runStateT m s

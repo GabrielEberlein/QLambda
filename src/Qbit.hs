@@ -26,16 +26,14 @@ import Data.Bits ((.&.), Bits (xor))
 import Tensor
 import Data.Complex
 import System.Random
-import qualified Control.Applicative as M
-import Control.Monad.IO.Class (MonadIO)
 
 type Ket =  Vector (Complex Double)
 
 nrQbits :: Ket -> Int
-nrQbits k = floor $ logBase 2 $ fromIntegral $ V.length k
+nrQbits k = floor $ logBase (2 :: Double) $ fromIntegral $ V.length k
 
 mNrQbits :: Matrix (Complex Double) -> Int
-mNrQbits m = floor $ logBase 2 $ fromIntegral $ nrows m
+mNrQbits m = floor $ logBase (2 :: Double) $ fromIntegral $ nrows m
 
 defQBits :: Ket
 defQBits = V.singleton (1 :+ 0)
@@ -71,15 +69,12 @@ colapse :: Double -> IO Int
 colapse p = do r <- randomRIO (0, 1)
                return $ if r < p then 0 else 1
 
--- normalize :: Ket -> Ket
--- normalize xs = let p = sqrt $ sum $ map (\x -> x^2) xs in map (\x -> x / p) xs
-
 -- Dado el ket que mantiene el estado de un sistema de
 -- n qubits, se mide el qubit en la posición i-ésima.
 measure :: Ket -> Int -> IO (Ket, Maybe Int)
 measure ket i = do let n = nrQbits ket
                    let ib = 2^(n-i-1)
-                   let p0 = P.sum $ [(ket V.! idx)^2 | idx <- [0 .. V.length ket - 1], (idx .&. ib == 0)]
+                   let p0 = P.sum $ [(ket V.! idx)^(2 :: Integer) | idx <- [0 .. V.length ket - 1], (idx .&. ib == 0)]
                    r <- colapse (realPart p0)
                    case r of
                         0 -> return (V.imap  (\ idx qb -> (/sqrt p0) (if (idx .&. ib == 0) then qb else 0:+0)) ket, Just 0)

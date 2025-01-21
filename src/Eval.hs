@@ -2,7 +2,7 @@
 {-# OPTIONS_GHC -Wno-missing-fields #-}
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
 module Eval(
-    defEnv,
+    defState,
     evalGate,
     evalConst,
     eval,
@@ -13,14 +13,12 @@ import AST
 import Monad
 import Qbit
 import qualified Data.Map as M
-import System.Random (newStdGen)
-import Control.Monad.IO.Class (MonadIO)
 
-defEnv :: Env
-defEnv = Env {
+defState :: PState
+defState = State {
             qbits = defQBits,
             vars = M.empty
-        }
+           }
 
 evalGate :: (MonadQuantum m) => Gate -> Value -> m Value
 evalGate u v@(VPair (VQbit i) (VQbit j)) = do apply2 u i j
@@ -97,9 +95,11 @@ quote (VQbit i) = QBit i
 
 
 
-evalProgram :: (MonadQuantum m) => [Stmt Term] -> m Value
+evalProgram :: (MonadQuantum m) => [Decl Term] -> m Value
 evalProgram [] = throwError "Empty program"
-evalProgram [Def _ t] = eval t
+evalProgram [Def n t] = do v <- eval t
+                           updateVar n v
+                           return v
 evalProgram ((Def n t):xs) = do v <- eval t
                                 updateVar n v
                                 evalProgram xs
