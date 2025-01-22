@@ -30,7 +30,9 @@ evalGate _ _ = throwError "Invalid type"
 evalConst :: (MonadQuantum m) => Const -> Value -> m Value
 evalConst New VZero = new 0
 evalConst New VOne = new 1
+evalConst New _ = throwError "Invalid type"
 evalConst Meas (VQbit i) = meas i
+evalConst Meas _ = throwError "Invalid type"
 evalConst (U u) v = evalGate u v
 
 
