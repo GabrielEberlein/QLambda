@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use void" #-}
 module Main (main) where
 
 import AST
@@ -13,21 +15,25 @@ main :: IO ()
 main = do
     args <- getArgs
     case args of
-        [] -> interactive
-        ("--help":_) -> printHelp
+        ("-h":_)            -> printHelp
+        ("--help":_)        -> printHelp
+
+        ("-i":_)            -> interactive
         ("--interactive":_) -> interactive
-        ("--file":file:_) -> do _ <- runFile defState file
-                                return ()
+
+        ("-f":file:_)       -> runFile defState file >> return ()
+        ("--file":file:_)   -> runFile defState file >> return ()
+
         _ -> do putStrLn $ "Invalid arguments "++ unwords args
                 printHelp
 
 printHelp :: IO ()
 printHelp = do
-    putStrLn "Usage: make run [--help | --interactive | --file <file>]"
-    putStrLn "Options:"
-    putStrLn "  --help          Show this help"
-    putStrLn "  --interactive   Start the interactive mode"
-    putStrLn "  --file <file>   Evaluate the file"
+    putStrLn "Usage: stack run -- [OPTIONS]"
+    putStrLn "[OPTIONS]:"
+    putStrLn "  (--help/-h)          Show this help"
+    putStrLn "  (--file/-f) <file>   Evaluate the file"
+    putStrLn "  (--interactive/-i)   Start the interactive mode"
 
 interactive :: IO ()
 interactive = do
@@ -51,8 +57,12 @@ interactive = do
                     putStrLn "<decl/term> - Evaluate a term or declaration"
                     loop st
                 (":l":file:_) -> runFile st file >>= loop
-                (":p":xs) -> do let p = parse $ unwords xs
-                                print p
+                (":p":xs) -> do let p = runP declOrTm (unwords xs) "stdin"
+                                case p of
+                                    Left err -> print err
+                                    Right p' -> case p' of
+                                        Left d -> print d
+                                        Right t -> print t
                                 loop st
                 xs -> do st' <- runTerm st $ unwords xs
                          loop st'
