@@ -116,6 +116,11 @@ atom =      SC <$> const
        <|> (reserved "*" >> return (STuple []))
        <|>  parens tm
 
+absNull :: P ([Name], AbsType)
+absNull = do reserved "*"
+             reservedOp "."
+             return ([], ANull)
+
 absVars :: P ([Name], AbsType)
 absVars = do vars <- many var
              reservedOp "."
@@ -134,7 +139,7 @@ absPair = do p <- pair
 
 abs :: P STerm
 abs = do reservedOp "\\"
-         (vars, absTy) <- try absPair <|> absVars
+         (vars, absTy) <- try absPair <|> try absVars <|> absNull
          t <- tm
          return (SAbs absTy vars t)
 
@@ -152,6 +157,11 @@ ifexp = do reserved "if"
            reserved "else"
            e <- tm
            return (SIf c t e)
+
+letNull :: P ([Name], LetType)
+letNull = do reserved "*"
+             reservedOp "="
+             return ([], LNull)
 
 letRec :: P ([Name], LetType)
 letRec = do reserved "rec"
@@ -178,7 +188,7 @@ letVar = do v <- var
 
 letexp :: P STerm
 letexp = do reserved "let" 
-            (vars, letTy) <- try letVar <|> try letPair <|> try letFun <|> letRec
+            (vars, letTy) <- try letVar <|> try letPair <|> try letFun <|> try letRec <|> letNull
             t <- tm
             reserved "in"
             t' <- tm

@@ -54,8 +54,8 @@ eval (Print s t) = do v <- eval t
 eval (Pair t1 t2) = do v1 <- eval t1
                        v2 <- eval t2
                        return (VPair v1 v2)
-eval (App t1 t2) = do v1 <- eval t1
-                      v2 <- eval t2
+eval (App t1 t2) = do v2 <- eval t2
+                      v1 <- eval t1
                       case v1 of
                         VAbs t -> eval $ subst 0 (quote v2) t
                         VC c -> evalConst c v2
