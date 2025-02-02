@@ -30,13 +30,15 @@ import System.Random
 type Ket =  Vector (Complex Double)
 
 nrQbits :: Ket -> Int
-nrQbits k = floor $ logBase (2 :: Double) $ fromIntegral $ V.length k
+nrQbits k = case V.length k of
+                0 -> 0
+                n -> floor $ logBase (2 :: Double) $ fromIntegral n
 
 mNrQbits :: Matrix (Complex Double) -> Int
 mNrQbits m = floor $ logBase (2 :: Double) $ fromIntegral $ nrows m
 
 defQBits :: Ket
-defQBits = V.singleton (1 :+ 0)
+defQBits = V.empty
 
 fromBit :: Int -> Ket
 fromBit 0 = V.fromList [(1 :+ 0), (0 :+ 0)]

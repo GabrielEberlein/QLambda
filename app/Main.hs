@@ -9,6 +9,7 @@ import System.IO (hFlush, stdout)
 import System.Environment (getArgs)
 import Monad
 import Parser
+import PrettyPrinter (pp)
 import Elab (elabProgram, elab)
 
 main :: IO ()
@@ -50,12 +51,16 @@ interactive = do
                 (":q":_) -> return ()
                 (":h":_) -> do
                     putStrLn "Commands:"
-                    putStrLn ":q - Quit"
-                    putStrLn ":h - Show this help"
-                    putStrLn ":l <file> - Load a file"
+                    putStrLn ":q             - Quit"
+                    putStrLn ":h             - Show this help"
+                    putStrLn ":st            - Show the current quantum state"
+                    putStrLn ":c             - Clear the quantum state and defined variables"
+                    putStrLn ":l <file>      - Load a file"
                     putStrLn ":p <decl/term> - Parse a term or declaration"
-                    putStrLn "<decl/term> - Evaluate a term or declaration"
+                    putStrLn "<decl/term>    - Evaluate a term or declaration"
                     loop st
+                (":st":_) -> printState st >>= loop
+                (":c":_) -> putStrLn "State cleared" >> loop defState
                 (":l":file:_) -> runFile st file >>= loop
                 (":p":xs) -> do let p = runP declOrTm (unwords xs) "stdin"
                                 case p of
@@ -67,19 +72,26 @@ interactive = do
                 xs -> do st' <- runTerm st $ unwords xs
                          loop st'
 
+printState :: PState -> IO PState
+printState st = do 
+    result <- runQState ppState st
+    case result of
+        Left err -> putStrLn err >> return st
+        Right (_,st') -> return st'
+
 runFile :: PState -> String -> IO PState
 runFile st file = do
     result <- runQState (evalFile file) st
     case result of
         Left err -> putStrLn err >> return st
-        Right (a,st') -> putStrLn "" >>print a >> return st'
+        Right (a,st') -> putStrLn "" >>pp a >> return st'
 
 runTerm :: PState -> String -> IO PState
 runTerm st term = do
     result <- runQState (evalTerm term) st
     case result of
         Left err -> putStrLn err >> return st
-        Right (a,st') -> print a >> return st'
+        Right (a,st') -> pp a >> return st'
 
 evalFile :: MonadQuantum m => String -> m Value
 evalFile f = do
