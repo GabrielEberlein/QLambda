@@ -201,7 +201,7 @@ match = do reserved "match"
            parens $ do x <- var
                        reservedOp "->"
                        t1 <- tm
-                       reserved "|"
+                       reservedOp "|"
                        y <- var
                        reservedOp "->"
                        t2 <- tm
