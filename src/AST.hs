@@ -46,6 +46,12 @@ data Term =
   | Match Term Term Term
   deriving (Show, Eq)
 
+pattern Zero :: Term
+pattern Zero = InjR Ople
+
+pattern One :: Term
+pattern One = InjL Ople
+
 data Const =
     U Gate
   | New
@@ -59,25 +65,6 @@ data Gate =
   | H
   | CNot
   deriving (Show, Eq)
-
-data Type =
-    T
-  | Qbit
-  | Exp Type
-  | Fun Type Type
-  | Tens Type Type
-  | Sum Type Type
-  deriving (Show, Eq)
-
-data N = N | I Int deriving (Show, Eq)
-instance Ord N where
-  compare N N = EQ
-  compare N _ = GT
-  compare _ N = LT
-  compare (I n) (I m) = compare n m
-
-pattern Bit :: Type
-pattern Bit = Sum T T
 
 data Value =
     VC Const
