@@ -14,12 +14,14 @@ import Monad
 import Qbit
 import qualified Data.Map as M
 
+-- Estado inicial de evaluacion
 defState :: PState
 defState = State {
             qbits = defQBits,
             vars = M.empty
            }
 
+-- Funcion para evaluar la aplicacion de una compuerta
 evalGate :: (MonadQuantum m) => Gate -> Value -> m Value
 evalGate u v@(VPair (VQbit i) (VQbit j)) = do apply2 u i j
                                               return v
@@ -27,6 +29,7 @@ evalGate u v@(VQbit i) = do apply u i
                             return v
 evalGate _ _ = throwError "Invalid type"
 
+-- Funcion para evaluar la aplicacion de una constante
 evalConst :: (MonadQuantum m) => Const -> Value -> m Value
 evalConst New VZero = new 0
 evalConst New VOne = new 1
@@ -35,7 +38,7 @@ evalConst Meas (VQbit i) = meas i
 evalConst Meas _ = throwError "Invalid type"
 evalConst (U u) v = evalGate u v
 
-
+-- Funcion de evaluacion de terminos
 eval :: (MonadQuantum m) => Term -> m Value
 eval (C t) = return (VC t)
 eval Ople = return VOple
@@ -72,6 +75,7 @@ eval (Match t l r) = do v <- eval t
                           VInjR v' -> do eval $ subst 0 (quote v') r
                           _ -> throwError "Invalid match"
 
+-- Funcion para substituir variables ligadas en un termino
 subst :: Int -> Term -> Term -> Term
 subst i t (Bound j) | i == j = t
                     | otherwise = Bound j
@@ -86,6 +90,7 @@ subst i t (Print s t') = Print s (subst i t t')
 subst i t (Rec m n) = Rec (subst (i+2) t m) (subst (i+1) t n)
 subst _ _ t = t
 
+-- Funcion para convertir un valor en un termino
 quote :: Value -> Term
 quote (VC c) = C c
 quote VOple = Ople
@@ -94,7 +99,6 @@ quote (VInjL v) = InjL (quote v)
 quote (VInjR v) = InjR (quote v)
 quote (VPair v1 v2) = Pair (quote v1) (quote v2)
 quote (VQbit i) = QBit i
-
 
 
 evalProgram :: (MonadQuantum m) => [Decl Term] -> m Value

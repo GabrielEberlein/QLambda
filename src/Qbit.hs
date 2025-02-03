@@ -29,17 +29,20 @@ import System.Random
 
 type Ket =  Vector (Complex Double)
 
+-- Cantidad de cubits en un vector
 nrQbits :: Ket -> Int
 nrQbits k = case V.length k of
                 0 -> 0
                 n -> floor $ logBase (2 :: Double) $ fromIntegral n
 
+-- Cantidad de cubits en una matriz
 mNrQbits :: Matrix (Complex Double) -> Int
 mNrQbits m = floor $ logBase (2 :: Double) $ fromIntegral $ nrows m
 
 defQBits :: Ket
 defQBits = V.empty
 
+-- Define el estado inicial de un cubit
 fromBit :: Int -> Ket
 fromBit 0 = V.fromList [(1 :+ 0), (0 :+ 0)]
 fromBit 1 = V.fromList [(0 :+ 0), (1 :+ 0)]
@@ -48,6 +51,7 @@ fromBit _ = error "Invalid bit"
 toVector :: Matrix (Complex Double) -> Ket
 toVector m = V.fromList $ M.toList m
 
+-- Matrices de transformacion de las compuertas
 getGate :: Gate -> Matrix (Complex Double)
 getGate X   = M.fromList 2 2 [(0 :+ 0), (1 :+ 0),
                               (1 :+ 0), (0 :+ 0)]
@@ -67,6 +71,7 @@ getGate CNot = M.fromList 4 4 [(1 :+ 0), (0 :+ 0), (0 :+ 0), (0 :+ 0),
                                (0 :+ 0), (0 :+ 0), (0 :+ 0), (1 :+ 0),
                                (0 :+ 0), (0 :+ 0), (1 :+ 0), (0 :+ 0)]
 
+-- Funcion para medir el estado al que colapsa un cubit
 colapse :: Double -> IO Int
 colapse p = do r <- randomRIO (0, 1)
                return $ if r < p then 0 else 1
@@ -84,12 +89,13 @@ measure ket i = do let n = nrQbits ket
                         _ -> return (ket, Just r)
 
 
--- Función que extiende una matriz a una de mayor dimensión
+-- Función que extiende una matriz a una mayor dimensión
 extend :: Gate -> Int -> Int -> IO (Matrix (Complex Double))
 extend u n i = do let g = getGate u
                   let m = M.identity (2^i) `tensor` g `tensor` M.identity (2^(n - i - (mNrQbits g)))
                   return m
 
+-- Funcion para intercambiar los indices de dos cubits
 swapQbits :: Int -> Int -> Ket -> Ket
 swapQbits i j ket | i > j = swapQbits j i ket
                   | otherwise = let n = nrQbits ket

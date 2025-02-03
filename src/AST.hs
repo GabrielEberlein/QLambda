@@ -2,17 +2,22 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 module AST where
 
--- Identificadores de Variable
+
 type Name = String
 
 type Program = [Decl STerm]
 
-data Decl i = Def String i           --  Declarar un nuevo identificador x, def x = t
+data Decl i = Def String i
     deriving (Show)
 
+
+-- Tipos de abstraciones azucaradas
 data AbsType = AVar | APair | ANull deriving (Show, Eq)
+-- Tipos de let azucarados
 data LetType = LVar | LPair | LNull | LFun | LRec deriving (Show, Eq)
 
+
+-- Arbol de sintaxis abstracta con azucar sintactico
 data STerm = 
     SC Const
   | SV Name
@@ -29,6 +34,7 @@ data STerm =
   | SMatch STerm Name STerm Name STerm
   deriving (Show, Eq)
 
+-- Arbol de sintaxis abstracta nucleo
 data Term =
     C Const
   | Ople 
@@ -66,6 +72,7 @@ data Gate =
   | CNot
   deriving (Show, Eq)
 
+-- Arbol de sintaxis abstracta de valores
 data Value =
     VC Const
   | VQbit Int

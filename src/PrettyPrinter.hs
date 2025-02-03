@@ -12,6 +12,8 @@ prettyBits i n = let bitwise = showBin i ""
                      zeros = replicate (n - length bitwise) '0'
                   in zeros ++ bitwise
 
+
+-- Funcion para formatear el estado de los cubits
 prettyQbits :: Int -> Int -> [Complex Double] -> String
 prettyQbits _ 0 _ = "No qbits"
 prettyQbits _ _ [] = ""
@@ -27,6 +29,7 @@ prettyQbits i n (x:xs) = let a  = realPart x
                               if s == "" then ss else
                                 s ++ " + " ++ ss
 
+-- Pretty printer de terminos
 ppTerm :: Term -> String
 ppTerm (C c) = show c
 ppTerm Ople = "*"
@@ -45,6 +48,7 @@ ppTerm (InjL t) = "injL " ++ ppTerm t
 ppTerm (InjR t) = "injR " ++ ppTerm t
 ppTerm (Match t l r) = "match " ++ ppTerm t ++ " with injL " ++ ppTerm l ++ " injR " ++ ppTerm r
 
+-- Pretty printer de valores
 pp :: Value -> IO ()
 pp v = putStrLn $ ppTerm $ quote v
       where quote (VC c) = C c

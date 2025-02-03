@@ -4,7 +4,6 @@ def BellMeasure = \q2.\q1.let <x,y> = CNOT <q1,q2> in <meas(H x), meas y>
 
 def EPR = \x.CNOT <H(new 0), new 0>
 
-# Esto se puede escribir mas lindo con composicion
 def U11 = \q. Z (X q)
 def U10 = \q. Z q
 def U01 = \q. X q

@@ -7,6 +7,7 @@ import Monad (MonadQuantum)
 
 type Env = [String]
 
+-- Funcion de elaboracion de terminos azucarados a terminos nucleo
 elab :: MonadQuantum m => Env -> STerm -> m Term
 elab _ (SC c) = return $ C c
 elab e (SV n) = return $ maybe (Free n) Bound (n `elemIndex` e)
@@ -58,6 +59,7 @@ elab e (SMatch c x m y n) = do c' <- elab e c
                                n' <- elab (y:e) n
                                return $ Match c' m' n'
 
+-- Funcion de elaboracion de programas
 elabProgram :: MonadQuantum m => [Decl STerm] -> m [Decl Term]
 elabProgram [] = return []
 elabProgram (Def x t:xs) = do t' <- elab [] t
