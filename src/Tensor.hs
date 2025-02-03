@@ -5,9 +5,6 @@ module Tensor (
 import Data.Matrix as M
 import Data.Vector as V
 
--- newtype Matrix a = Matrix {getMatrix :: M.Matrix a}
--- newtype Vector a = Vector {getVector :: V.Vector a}
-
 class Tensor t where
     tensor :: Num a => t a -> t a -> t a
 
