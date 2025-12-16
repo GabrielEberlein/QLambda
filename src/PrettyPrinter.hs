@@ -1,5 +1,5 @@
 module PrettyPrinter (
-    prettyQbits,
+    prettyState,
     pp
 ) where
 
@@ -14,20 +14,35 @@ prettyBits i n = let bitwise = showBin i ""
 
 
 -- Funcion para formatear el estado de los cubits
-prettyQbits :: Int -> Int -> [Complex Double] -> String
-prettyQbits _ 0 _ = "No qbits"
-prettyQbits _ _ [] = ""
-prettyQbits i n (x:xs) = let a  = realPart x
-                             b  = imagPart x
-                             i' = prettyBits i n
-                             ss = prettyQbits (i+1) n xs
-                             s | a+b == 0 = ""
-                               | a+b == a = show a ++ " |" ++ i' ++ "⟩"
-                               | a+b == b = show b ++ "i |" ++ i' ++ "⟩"
-                               | otherwise = "(" ++ show a ++ " + " ++ show b ++ "i) |" ++ i' ++ "⟩"
-                         in if ss == "" then s else
-                              if s == "" then ss else
-                                s ++ " + " ++ ss
+prettyStateDirac :: Int -> Int -> [Complex Double] -> String
+prettyStateDirac _ 0 _  = "No qbits"
+prettyStateDirac _ _ [] = ""
+prettyStateDirac i n (x:xs) =
+  let a  = realPart x
+      b  = imagPart x
+      i' = prettyBits i n
+      ss = prettyStateDirac (i+1) n xs
+      s
+        | a + b == 0 = ""
+        | a + b == a = show a ++ " |" ++ i' ++ "⟩"
+        | a + b == b = show b ++ "i |" ++ i' ++ "⟩"
+        | otherwise  = "(" ++ show a ++ " + " ++ show b ++ "i) |" ++ i' ++ "⟩"
+  in
+    if ss == "" then s
+    else if s == "" then ss
+    else s ++ " + " ++ ss
+
+
+bar :: Double -> Int -> String
+bar p ancho = let filled = round (p * fromIntegral ancho) in replicate filled '█' ++ replicate (ancho - filled) '░'
+
+prettyStateAmplitudes :: Int -> Int -> [Double] -> String
+prettyStateAmplitudes _ 0 _ = "No qbits"
+prettyStateAmplitudes _ _ [] = ""
+prettyStateAmplitudes i n (x:xs) = prettyBits i n ++ " " ++ bar x 50 ++ " " ++ show x ++ "\n\n" ++ prettyStateAmplitudes (i+1) n xs
+
+prettyState :: Ket -> String
+prettyState q = prettyStateAmplitudes 0 (nrQbits q) (amplitudes q)
 
 -- Pretty printer de terminos
 ppTerm :: Term -> String
@@ -51,11 +66,11 @@ ppTerm (Match t l r) = "match " ++ ppTerm t ++ " with injL " ++ ppTerm l ++ " in
 -- Pretty printer de valores
 pp :: Value -> IO ()
 pp v = putStrLn $ ppTerm $ quote v
-      where quote (VC c) = C c
-            quote VOple = Ople
-            quote (VAbs t) = Abs t
-            quote (VInjL v') = InjL (quote v')
-            quote (VInjR v') = InjR (quote v')
-            quote (VPair v1 v2) = Pair (quote v1) (quote v2)
-            quote (VQbit i) = QBit i
-
+  where
+    quote (VC c)        = C c
+    quote VOple         = Ople
+    quote (VAbs t)      = Abs t
+    quote (VInjL v')    = InjL (quote v')
+    quote (VInjR v')    = InjR (quote v')
+    quote (VPair v1 v2) = Pair (quote v1) (quote v2)
+    quote (VQbit i)     = QBit i

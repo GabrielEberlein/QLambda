@@ -18,7 +18,7 @@ import Control.Monad.State
 import Control.Monad.Except
 import Qbit
 import Data.Matrix (colVector)
-import PrettyPrinter (prettyQbits)
+import PrettyPrinter (prettyState)
 
 type Error = String
 
@@ -51,7 +51,7 @@ class (MonadIO m, MonadState PState m, MonadError Error m) => MonadQuantum m whe
   ppState :: m ()
   ppState = do
       q <- getQbits
-      logM $ prettyQbits 0 (nrQbits q) (toList q)
+      logM $ prettyState q
 
   new :: Int -> m Value
   new b = do q <- getQbits

@@ -16,6 +16,7 @@ module Qbit (
     Complex,
     realPart,
     imagPart,
+    amplitudes,
 ) where
 
 import AST ( Gate(..) )
@@ -75,6 +76,9 @@ getGate CNot = M.fromList 4 4 [(1 :+ 0), (0 :+ 0), (0 :+ 0), (0 :+ 0),
 colapse :: Double -> IO Int
 colapse p = do r <- randomRIO (0, 1)
                return $ if r < p then 0 else 1
+
+amplitudes :: Ket -> [Double]
+amplitudes q = [magnitude (q V.! idx)^(2 :: Integer) | idx <- [0 .. V.length q - 1]]
 
 -- Dado el ket que mantiene el estado de un sistema de
 -- n qubits, se mide el qubit en la posición i-ésima.
